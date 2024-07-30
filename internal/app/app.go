@@ -1,6 +1,8 @@
 package app
 
 import (
+	"context"
+	"github.com/VadimGossip/tj-drs-storage/internal/domain"
 	"github.com/sirupsen/logrus"
 	"os"
 	"os/signal"
@@ -15,6 +17,7 @@ func init() {
 }
 
 type App struct {
+	*Factory
 	name         string
 	configDir    string
 	appStartedAt time.Time
@@ -44,17 +47,34 @@ func setLogFile(filepath string) *os.File {
 }
 
 func (app *App) Run() {
-	//ctx, cancel := context.WithCancel(context.Background())
-	//defer cancel()
-	dbAdapter := NewDBAdapter()
-	if err := dbAdapter.Connect(); err != nil {
+	ctx, cancel := context.WithCancel(context.Background())
+	defer cancel()
+	dbAdapter := NewDBAdapter(&domain.Config{TargetDb: domain.TargetDbConfig{
+		Host:     "192.168.244.157",
+		Port:     29130,
+		Username: "",
+		Password: "",
+		Db:       0,
+	}},
+	)
+	if err := dbAdapter.Connect(ctx); err != nil {
 		logrus.Fatalf("Fail to connect db %s", err)
 	}
+	app.Factory = newFactory(dbAdapter)
 
 	logrus.Infof("[%s] started", app.name)
+	if err := app.Factory.imitator.RunTests(ctx); err != nil {
+		logrus.Errorf("[%s] fail to run tests: %s", app.name, err)
+		return
+	}
+
 	c := make(chan os.Signal, 1)
 	signal.Notify(c, syscall.SIGTERM, syscall.SIGINT)
 	logrus.Infof("[%s] got signal: [%s]", app.name, <-c)
+	if err := dbAdapter.Disconnect(); err != nil {
+		logrus.Errorf("[%s] fail to diconnect db: %s", app.name, err)
+		return
+	}
 
 	logrus.Infof("[%s] stopped", app.name)
 }
