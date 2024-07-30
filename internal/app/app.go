@@ -49,7 +49,7 @@ func (app *App) Run() {
 	ctx, cancel := context.WithCancel(context.Background())
 	defer cancel()
 	dbAdapter := NewDBAdapter(&domain.Config{TargetDb: domain.TargetDbConfig{
-		Host:     "192.168.244.157",
+		Host:     "",
 		Port:     29130,
 		Username: "",
 		Password: "",
@@ -66,7 +66,7 @@ func (app *App) Run() {
 		RequestsPerSec: 100,
 		PackPerSec:     10,
 		Summary: &domain.TaskSummary{
-			Total:    1000,
+			Total:    100000,
 			Duration: &domain.DurationSummary{EMA: util.NewEMA(0.01), Histogram: make(map[float64]int)},
 		},
 	}); err != nil {
