@@ -3,10 +3,9 @@ package app
 import (
 	"context"
 	"github.com/VadimGossip/tj-drs-storage/internal/domain"
+	"github.com/VadimGossip/tj-drs-storage/pkg/util"
 	"github.com/sirupsen/logrus"
 	"os"
-	"os/signal"
-	"syscall"
 	"time"
 )
 
@@ -63,14 +62,21 @@ func (app *App) Run() {
 	app.Factory = newFactory(dbAdapter)
 
 	logrus.Infof("[%s] started", app.name)
-	if err := app.Factory.imitator.RunTests(ctx); err != nil {
+	if err := app.Factory.imitator.RunTests(ctx, &domain.Task{
+		RequestsPerSec: 100,
+		PackPerSec:     10,
+		Summary: &domain.TaskSummary{
+			Total:    1000,
+			Duration: &domain.DurationSummary{EMA: util.NewEMA(0.01), Histogram: make(map[float64]int)},
+		},
+	}); err != nil {
 		logrus.Errorf("[%s] fail to run tests: %s", app.name, err)
 		return
 	}
 
-	c := make(chan os.Signal, 1)
-	signal.Notify(c, syscall.SIGTERM, syscall.SIGINT)
-	logrus.Infof("[%s] got signal: [%s]", app.name, <-c)
+	//c := make(chan os.Signal, 1)
+	//signal.Notify(c, syscall.SIGTERM, syscall.SIGINT)
+	//logrus.Infof("[%s] got signal: [%s]", app.name, <-c)
 	if err := dbAdapter.Disconnect(); err != nil {
 		logrus.Errorf("[%s] fail to diconnect db: %s", app.name, err)
 		return

@@ -9,6 +9,6 @@ import (
 var configDir = "config"
 
 func main() {
-	storage := app.NewApp("DRS Router", configDir, time.Now())
+	storage := app.NewApp("Db test stand", configDir, time.Now())
 	storage.Run()
 }

@@ -3,13 +3,17 @@ package imitator
 import (
 	"context"
 	"fmt"
+	"github.com/VadimGossip/tj-drs-storage/internal/domain"
+	"github.com/VadimGossip/tj-drs-storage/internal/event"
 	"github.com/VadimGossip/tj-drs-storage/internal/rate"
+	"github.com/VadimGossip/tj-drs-storage/pkg/util"
 	"github.com/sirupsen/logrus"
+	"sync"
 	"time"
 )
 
 type Service interface {
-	RunTests(ctx context.Context) error
+	RunTests(ctx context.Context, task *domain.Task) error
 }
 
 type service struct {
@@ -22,23 +26,54 @@ func NewService(rate rate.Service) *service {
 	return &service{rate: rate}
 }
 
-func (s *service) RunTests(ctx context.Context) error {
+func (s *service) addDurationToSummary(summary *domain.TaskSummary, dur time.Duration, mu *sync.Mutex) {
+	mu.Lock()
+	defer mu.Unlock()
+	if summary.Duration.Min > dur {
+		summary.Duration.Min = dur
+	}
+	if summary.Duration.Max < dur {
+		summary.Duration.Max = dur
+	}
+	summary.Duration.EMA.Add(float64(dur.Nanoseconds()))
+	summary.Duration.Histogram[(util.RoundFloat(float64(dur.Milliseconds()/100), 0)*100)+100]++
+	return
+}
+
+func (s *service) sendDbRequest(ctx context.Context, summary *domain.TaskSummary, mu *sync.Mutex) error {
 	ts := time.Now()
 
 	var gwgrId int64 = 4728
 	var aNumber uint64 = 525594178906
 	var bNumber uint64 = 524423388739
-	_, rv, err := s.rate.FindRate(ctx, gwgrId, ts.Unix(), 0, aNumber, bNumber)
+	_, _, err := s.rate.FindRate(ctx, gwgrId, ts.Unix(), 0, aNumber, bNumber)
 	if err != nil {
 		return err
 	}
-	fmt.Println("rv:", rv)
 
-	logrus.Infof("Test param %+v, duration %s", Task{
-		RequestsPerSec: 1,
-		PackPerSec:     1,
-		Total:          1,
-	}, time.Since(ts))
+	s.addDurationToSummary(summary, time.Since(ts), mu)
+	return nil
+}
 
+func (s *service) RunTests(ctx context.Context, task *domain.Task) error {
+	rateCtrl := event.NewService()
+	wg := &sync.WaitGroup{}
+	mu := &sync.Mutex{}
+	for e := range rateCtrl.RunEventGeneration(ctx, task.Summary.Total, task.RequestsPerSec, task.PackPerSec) {
+		for i := 0; i < e; i++ {
+			wg.Add(1)
+			go func(wg *sync.WaitGroup) {
+				defer wg.Done()
+				if err := s.sendDbRequest(ctx, task.Summary, mu); err != nil {
+					logrus.Errorf("sendDbRequest err %s", err)
+				}
+			}(wg)
+		}
+	}
+	wg.Wait()
+	fmt.Printf("Histogram %+v\n", task.Summary.Duration.Histogram)
+	fmt.Printf("Request EMA Answer Duration %+v\n", time.Duration(task.Summary.Duration.EMA.Value()))
+	fmt.Printf("Request Min Answer Duration %+v\n", task.Summary.Duration.Min)
+	fmt.Printf("Request Max Answer Duration %+v\n", task.Summary.Duration.Max)
 	return nil
 }
