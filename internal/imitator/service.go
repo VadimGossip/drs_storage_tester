@@ -2,6 +2,7 @@ package imitator
 
 import (
 	"context"
+	"fmt"
 	"github.com/VadimGossip/tj-drs-storage/internal/rate"
 	"github.com/sirupsen/logrus"
 	"time"
@@ -27,10 +28,11 @@ func (s *service) RunTests(ctx context.Context) error {
 	var gwgrId int64 = 4728
 	var aNumber uint64 = 525594178906
 	var bNumber uint64 = 524423388739
-	_, _, err := s.rate.FindRate(ctx, gwgrId, ts.Unix(), 0, aNumber, bNumber)
+	_, rv, err := s.rate.FindRate(ctx, gwgrId, ts.Unix(), 0, aNumber, bNumber)
 	if err != nil {
 		return err
 	}
+	fmt.Println("rv:", rv)
 
 	logrus.Infof("Test param %+v, duration %s", Task{
 		RequestsPerSec: 1,
