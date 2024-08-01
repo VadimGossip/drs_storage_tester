@@ -66,7 +66,7 @@ func (app *App) Run() {
 		RequestsPerSec: 100,
 		PackPerSec:     10,
 		Summary: &domain.TaskSummary{
-			Total:    100000,
+			Total:    1000,
 			Duration: &domain.DurationSummary{EMA: util.NewEMA(0.01), Histogram: make(map[float64]int)},
 		},
 	}); err != nil {
