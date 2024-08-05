@@ -3,6 +3,7 @@ package imitator
 import (
 	"context"
 	"fmt"
+	"github.com/VadimGossip/tj-drs-storage/internal/data"
 	"github.com/VadimGossip/tj-drs-storage/internal/domain"
 	"github.com/VadimGossip/tj-drs-storage/internal/event"
 	"github.com/VadimGossip/tj-drs-storage/internal/rate"
@@ -18,11 +19,12 @@ type Service interface {
 
 type service struct {
 	rate rate.Service
+	data data.Service
 }
 
 var _ Service = (*service)(nil)
 
-func NewService(rate rate.Service) *service {
+func NewService(rate rate.Service, data data.Service) *service {
 	return &service{rate: rate}
 }
 
@@ -41,12 +43,10 @@ func (s *service) addDurationToSummary(summary *domain.TaskSummary, dur time.Dur
 }
 
 func (s *service) sendDbRequest(ctx context.Context, summary *domain.TaskSummary, mu *sync.Mutex) error {
+	req := s.data.GetTaskRequest()
 	ts := time.Now()
 
-	var gwgrId int64 = 4728
-	var aNumber uint64 = 525594178906
-	var bNumber uint64 = 524423388739
-	_, _, err := s.rate.FindRate(ctx, gwgrId, ts.Unix(), 0, aNumber, bNumber)
+	_, _, err := s.rate.FindRate(ctx, req.GwgrId, ts.Unix(), 0, req.Anumber, req.Bnumber)
 	if err != nil {
 		return err
 	}

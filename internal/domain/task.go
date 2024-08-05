@@ -26,3 +26,11 @@ type TaskSummary struct {
 	Total    int
 	Duration *DurationSummary
 }
+
+type TaskRequest struct {
+	GwgrId      int64  `json:"gwgr_id"`
+	OrigAnumber uint64 `json:"original_anumber"`
+	OrigBnumber uint64 `json:"original_bnumber"`
+	Anumber     uint64 `json:"anumber"`
+	Bnumber     uint64 `json:"bnumber"`
+}

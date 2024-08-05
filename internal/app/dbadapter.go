@@ -21,6 +21,8 @@ func NewDBAdapter(cfg *domain.Config) *DBAdapter {
 	return dba
 }
 
+// fmt.Sprintf(`user=%s password=%s connectString=%s:%d/%s`
+
 func (d *DBAdapter) connectKdb(ctx context.Context) error {
 	kdbCfg := d.cfg.TargetDb
 
