@@ -17,6 +17,7 @@ type KeyDbConfig struct {
 }
 
 type Config struct {
+	Task         *Task
 	DataSourceDb OracleConfig
 	TargetDb     KeyDbConfig
 }

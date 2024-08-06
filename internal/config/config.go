@@ -1,6 +1,7 @@
 package config
 
 import (
+	"github.com/VadimGossip/tj-drs-storage/pkg/util"
 	"github.com/spf13/viper"
 
 	"github.com/VadimGossip/tj-drs-storage/internal/domain"
@@ -19,6 +20,11 @@ func unmarshal(cfg *domain.Config) error {
 	if err := viper.UnmarshalKey("oracle", &cfg.DataSourceDb); err != nil {
 		return err
 	}
+	if err := viper.UnmarshalKey("task", &cfg.Task); err != nil {
+		return err
+	}
+	cfg.Task.Summary.DbDuration = &domain.DurationSummary{EMA: util.NewEMA(0.01), Histogram: make(map[float64]int)}
+	cfg.Task.Summary.TotalDuration = &domain.DurationSummary{EMA: util.NewEMA(0.01), Histogram: make(map[float64]int)}
 	return nil
 }
 

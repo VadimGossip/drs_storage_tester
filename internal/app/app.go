@@ -11,7 +11,6 @@ import (
 
 	"github.com/VadimGossip/tj-drs-storage/internal/config"
 	"github.com/VadimGossip/tj-drs-storage/internal/domain"
-	"github.com/VadimGossip/tj-drs-storage/pkg/util"
 )
 
 func init() {
@@ -79,15 +78,7 @@ func (a *App) Run(ctx context.Context) error {
 		logrus.Infof("[%s] stopped", a.name)
 	}()
 	logrus.Infof("[%s] started", a.name)
-	if err := a.serviceProvider.ImitatorService(ctx).RunTests(ctx, &domain.Task{
-		RequestsPerSec: 100,
-		PackPerSec:     10,
-		Summary: &domain.TaskSummary{
-			Total:         1000,
-			DbDuration:    &domain.DurationSummary{EMA: util.NewEMA(0.01), Histogram: make(map[float64]int)},
-			TotalDuration: &domain.DurationSummary{EMA: util.NewEMA(0.01), Histogram: make(map[float64]int)},
-		},
-	}); err != nil {
+	if err := a.serviceProvider.ImitatorService(ctx).RunTests(ctx, a.cfg.Task); err != nil {
 		logrus.Errorf("[%s] fail to run tests: %s", a.name, err)
 		return err
 	}

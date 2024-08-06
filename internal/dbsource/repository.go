@@ -2,7 +2,6 @@ package dbsource
 
 import (
 	"context"
-	"fmt"
 	"strconv"
 
 	sq "github.com/Masterminds/squirrel"
@@ -52,7 +51,6 @@ func (r *repository) GetTaskRequests(ctx context.Context, limit int64) ([]domain
 	if err != nil {
 		return nil, err
 	}
-	fmt.Println(query)
 
 	rows, err := r.db.DB().QueryContext(ctx, query, args...)
 	if err != nil {

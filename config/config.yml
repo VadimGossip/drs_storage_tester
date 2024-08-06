@@ -12,3 +12,10 @@ oracle:
   password:  "password"            # password for oracle
   service:   "service"             # service for oracle
 
+task:
+  requestsPerSec: 100
+  packPerSec: 10
+  summary:
+    total: 1000
+
+

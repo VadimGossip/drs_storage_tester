@@ -9,6 +9,7 @@ type Task struct {
 	PackPerSec     int
 	Summary        *TaskSummary
 }
+
 type EMA interface {
 	Add(float64)
 	AddAndReturn(float64) float64
