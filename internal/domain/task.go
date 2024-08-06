@@ -23,8 +23,9 @@ type DurationSummary struct {
 }
 
 type TaskSummary struct {
-	Total    int
-	Duration *DurationSummary
+	Total         int
+	DbDuration    *DurationSummary
+	TotalDuration *DurationSummary
 }
 
 type TaskRequest struct {

@@ -2,6 +2,7 @@ package dbsource
 
 import (
 	"context"
+	"fmt"
 	"strconv"
 
 	sq "github.com/Masterminds/squirrel"
@@ -40,16 +41,18 @@ func (r *repository) GetTaskRequests(ctx context.Context, limit int64) ([]domain
 		bnumberInColumn,
 		anumberOutColumn,
 		bnumberOutColumn).
-		From(cdrTableName)
+		From(cdrTableName).
+		PlaceholderFormat(sq.Colon)
 
 	if limit > 0 {
-		cdrSelect = cdrSelect.Where("rownum <= ?", limit)
+		cdrSelect = cdrSelect.Where(sq.LtOrEq{"rownum": limit})
 	}
 
 	query, args, err := cdrSelect.ToSql()
 	if err != nil {
 		return nil, err
 	}
+	fmt.Println(query)
 
 	rows, err := r.db.DB().QueryContext(ctx, query, args...)
 	if err != nil {

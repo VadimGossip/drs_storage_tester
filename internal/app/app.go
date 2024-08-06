@@ -2,11 +2,16 @@ package app
 
 import (
 	"context"
-	"github.com/VadimGossip/tj-drs-storage/internal/domain"
-	"github.com/VadimGossip/tj-drs-storage/pkg/util"
-	"github.com/sirupsen/logrus"
+	"fmt"
+	"github.com/VadimGossip/tj-drs-storage/internal/closer"
 	"os"
 	"time"
+
+	"github.com/sirupsen/logrus"
+
+	"github.com/VadimGossip/tj-drs-storage/internal/config"
+	"github.com/VadimGossip/tj-drs-storage/internal/domain"
+	"github.com/VadimGossip/tj-drs-storage/pkg/util"
 )
 
 func init() {
@@ -16,71 +21,76 @@ func init() {
 }
 
 type App struct {
-	*Factory
-	name         string
-	configDir    string
-	appStartedAt time.Time
+	serviceProvider *serviceProvider
+	name            string
+	configDir       string
+	appStartedAt    time.Time
+	cfg             *domain.Config
 }
 
-func NewApp(name, configDir string, appStartedAt time.Time) *App {
-	return &App{
+func NewApp(ctx context.Context, name, configDir string, appStartedAt time.Time) (*App, error) {
+	a := &App{
 		name:         name,
 		configDir:    configDir,
 		appStartedAt: appStartedAt,
 	}
+
+	if err := a.initDeps(ctx); err != nil {
+		return nil, err
+	}
+
+	return a, nil
 }
 
-func setLogFile(filepath string) *os.File {
-	if filepath == "" {
-		logrus.Info("Empty path to log to file, using default stdout")
-		return nil
+func (a *App) initDeps(ctx context.Context) error {
+	inits := []func(context.Context) error{
+		a.initConfig,
+		a.initServiceProvider,
 	}
-	file, err := os.OpenFile(filepath, os.O_CREATE|os.O_WRONLY|os.O_APPEND, 0666)
+
+	for _, f := range inits {
+		if err := f(ctx); err != nil {
+			return err
+		}
+	}
+
+	return nil
+}
+
+func (a *App) initConfig(_ context.Context) error {
+	cfg, err := config.Init(a.configDir)
 	if err != nil {
-		logrus.Info("Failed to log to file, using default stdout")
-		return nil
-	} else {
-		logrus.SetOutput(file)
+		return fmt.Errorf("[%s] config initialization error: %s", a.name, err)
 	}
-	return file
+	a.cfg = cfg
+	logrus.Infof("[%s] got config: [%+v]", a.name, *a.cfg)
+	return nil
 }
 
-func (app *App) Run() {
-	ctx, cancel := context.WithCancel(context.Background())
-	defer cancel()
-	dbAdapter := NewDBAdapter(&domain.Config{TargetDb: domain.TargetDbConfig{
-		Host:     "",
-		Port:     29130,
-		Username: "",
-		Password: "",
-		Db:       0,
-	}},
-	)
-	if err := dbAdapter.Connect(ctx); err != nil {
-		logrus.Fatalf("Fail to connect db %s", err)
-	}
-	app.Factory = newFactory(dbAdapter)
+func (a *App) initServiceProvider(_ context.Context) error {
+	a.serviceProvider = newServiceProvider(a.cfg)
+	return nil
+}
 
-	logrus.Infof("[%s] started", app.name)
-	if err := app.Factory.imitator.RunTests(ctx, &domain.Task{
+func (a *App) Run(ctx context.Context) error {
+	defer func() {
+		closer.CloseAll()
+		closer.Wait()
+		logrus.Infof("[%s] stopped", a.name)
+	}()
+	logrus.Infof("[%s] started", a.name)
+	if err := a.serviceProvider.ImitatorService(ctx).RunTests(ctx, &domain.Task{
 		RequestsPerSec: 100,
 		PackPerSec:     10,
 		Summary: &domain.TaskSummary{
-			Total:    1000,
-			Duration: &domain.DurationSummary{EMA: util.NewEMA(0.01), Histogram: make(map[float64]int)},
+			Total:         1000,
+			DbDuration:    &domain.DurationSummary{EMA: util.NewEMA(0.01), Histogram: make(map[float64]int)},
+			TotalDuration: &domain.DurationSummary{EMA: util.NewEMA(0.01), Histogram: make(map[float64]int)},
 		},
 	}); err != nil {
-		logrus.Errorf("[%s] fail to run tests: %s", app.name, err)
-		return
+		logrus.Errorf("[%s] fail to run tests: %s", a.name, err)
+		return err
 	}
 
-	//c := make(chan os.Signal, 1)
-	//signal.Notify(c, syscall.SIGTERM, syscall.SIGINT)
-	//logrus.Infof("[%s] got signal: [%s]", app.name, <-c)
-	if err := dbAdapter.Disconnect(); err != nil {
-		logrus.Errorf("[%s] fail to diconnect db: %s", app.name, err)
-		return
-	}
-
-	logrus.Infof("[%s] stopped", app.name)
+	return nil
 }

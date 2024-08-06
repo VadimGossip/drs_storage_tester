@@ -13,6 +13,7 @@ type Source interface {
 
 type Service interface {
 	GetTaskRequest() domain.TaskRequest
+	Refresh(ctx context.Context, limit int64) error
 }
 
 type service struct {
@@ -27,6 +28,15 @@ var _ Service = (*service)(nil)
 func NewService(dbSource Source) *service {
 	s := &service{dbSource: dbSource}
 	return s
+}
+
+func (s *service) Refresh(ctx context.Context, limit int64) error {
+	var err error
+	s.requests, err = s.dbSource.GetTaskRequests(ctx, limit)
+	if err != nil {
+		return err
+	}
+	return nil
 }
 
 func (s *service) GetTaskRequest() domain.TaskRequest {

@@ -1,0 +1,14 @@
+keydb:
+  host:      "host"
+  port:      "port"
+  username:  "username"
+  password:  "password"
+  db:        "db"
+
+oracle:
+  host:      "host"                # host for oracle
+  port:      "port"                # port for oracle
+  username:  "username"            # username for oracle
+  password:  "password"            # password for oracle
+  service:   "service"             # service for oracle
+

@@ -1,6 +1,14 @@
 package domain
 
-type TargetDbConfig struct {
+type OracleConfig struct {
+	Host     string
+	Port     int
+	Username string
+	Password string
+	Service  string
+}
+
+type KeyDbConfig struct {
 	Host     string
 	Port     int
 	Username string
@@ -9,5 +17,6 @@ type TargetDbConfig struct {
 }
 
 type Config struct {
-	TargetDb TargetDbConfig
+	DataSourceDb OracleConfig
+	TargetDb     KeyDbConfig
 }
