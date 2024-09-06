@@ -1,6 +1,7 @@
 package tarantool
 
 import (
+	"fmt"
 	"time"
 
 	db "github.com/VadimGossip/tj-drs-storage/internal/client/db/tarantool"
@@ -31,5 +32,9 @@ func (r *repository) FindRate(gwgrId, dateAt int64, dir uint8, aNumber, bNumber 
 	if err != nil {
 		return 0, 0, time.Since(ts), err
 	}
-	return int64(resp[1].(uint32)), resp[0].(float64), time.Since(ts), nil
+	if len(resp) == 2 {
+		return 1, 1, time.Since(ts), nil
+	}
+
+	return 0, 0, time.Since(ts), fmt.Errorf("unexpected response length %d", len(resp))
 }

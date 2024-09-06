@@ -146,7 +146,7 @@ func (s *serviceProvider) TRateService(ctx context.Context) service.RateService 
 	if s.tRateService == nil {
 		s.tRateService = tRateService.NewService(s.TRateRepo(ctx))
 	}
-	return s.rateService
+	return s.tRateService
 }
 
 func (s *serviceProvider) ImitatorService(ctx context.Context) imitator.Service {

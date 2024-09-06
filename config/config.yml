@@ -1,16 +1,16 @@
 keydb:
-  host:      "host"
-  port:      "port"
-  username:  "username"
-  password:  "password"
-  db:        "db"
+  host:
+  port:
+  username:
+  password:
+  db:
 
 oracle:
-  host:      "host"                # host for oracle
-  port:      "port"                # port for oracle
-  username:  "username"            # username for oracle
-  password:  "password"            # password for oracle
-  service:   "service"             # service for oracle
+  host:      "score-test.telejet-soft.com"                # host for oracle
+  port:      1521                # port for oracle
+  username:  "vtbs_drs_pref"            # username for oracle
+  password:  "sdjjaq3x"            # password for oracle
+  service:   "TELEJET"             # service for oracle
 
 task:
   requestsPerSec: 100
