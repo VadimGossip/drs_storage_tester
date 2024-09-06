@@ -5,6 +5,13 @@ import (
 	"fmt"
 	"log"
 
+	"github.com/VadimGossip/tj-drs-storage/internal/client/db/tarantool"
+	"github.com/VadimGossip/tj-drs-storage/internal/client/db/tarantool/tdb"
+	"github.com/VadimGossip/tj-drs-storage/internal/repository"
+
+	tRateRepo "github.com/VadimGossip/tj-drs-storage/internal/repository/rate/tarantool"
+	"github.com/VadimGossip/tj-drs-storage/internal/service"
+	tRateService "github.com/VadimGossip/tj-drs-storage/internal/service/rate"
 	"github.com/sirupsen/logrus"
 
 	"github.com/VadimGossip/tj-drs-storage/internal/client/db/keydb"
@@ -20,8 +27,7 @@ import (
 )
 
 type serviceProvider struct {
-	cfg *domain.Config
-
+	cfg          *domain.Config
 	odbClient    oracle.Client
 	txManager    oracle.TxManager
 	dbSourceRepo dbsource.Repository
@@ -29,9 +35,13 @@ type serviceProvider struct {
 	kdbClient keydb.Client
 	rateRepo  rate.Repository
 
+	tarantoolClient   tarantool.Client
+	tarantoolRateRepo repository.RateRepository
+
 	dbSourceService dbsource.Service
 	dataService     data.Service
 	rateService     rate.Service
+	tRateService    service.RateService
 	imitatorService imitator.Service
 }
 
@@ -77,6 +87,19 @@ func (s *serviceProvider) KeyDbClient(ctx context.Context) keydb.Client {
 	return s.kdbClient
 }
 
+func (s *serviceProvider) TarantoolClient(ctx context.Context) tarantool.Client {
+	if s.tarantoolClient == nil {
+		cl, err := tdb.New(ctx, "todo_config")
+		if err != nil {
+			logrus.Fatalf("failed to create tarantool client: %s", err)
+		}
+		closer.Add(cl.Close)
+		s.tarantoolClient = cl
+	}
+
+	return s.tarantoolClient
+}
+
 func (s *serviceProvider) DbSourceRepo(ctx context.Context) dbsource.Repository {
 	if s.dbSourceRepo == nil {
 		s.dbSourceRepo = dbsource.NewRepository(s.OdbClient(ctx))
@@ -89,6 +112,13 @@ func (s *serviceProvider) RateRepo(ctx context.Context) rate.Repository {
 		s.rateRepo = rate.NewRepository(s.KeyDbClient(ctx))
 	}
 	return s.rateRepo
+}
+
+func (s *serviceProvider) TRateRepo(ctx context.Context) repository.RateRepository {
+	if s.tarantoolRateRepo == nil {
+		s.tarantoolRateRepo = tRateRepo.NewRepository(s.TarantoolClient(ctx))
+	}
+	return s.tarantoolRateRepo
 }
 
 func (s *serviceProvider) DbSourceService(ctx context.Context) dbsource.Service {
@@ -112,9 +142,16 @@ func (s *serviceProvider) RateService(ctx context.Context) rate.Service {
 	return s.rateService
 }
 
+func (s *serviceProvider) TRateService(ctx context.Context) service.RateService {
+	if s.tRateService == nil {
+		s.tRateService = tRateService.NewService(s.TRateRepo(ctx))
+	}
+	return s.rateService
+}
+
 func (s *serviceProvider) ImitatorService(ctx context.Context) imitator.Service {
 	if s.imitatorService == nil {
-		s.imitatorService = imitator.NewService(s.RateService(ctx), s.DataService(ctx))
+		s.imitatorService = imitator.NewService(s.TRateService(ctx), s.DataService(ctx))
 	}
 	return s.imitatorService
 }
