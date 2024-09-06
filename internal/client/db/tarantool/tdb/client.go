@@ -14,7 +14,7 @@ type tdbClient struct {
 
 func New(ctx context.Context, dsn string) (db.Client, error) {
 	dialer := tarantool.NetDialer{
-		Address: "192.168.244.157:3301",
+		Address: ":3301",
 		User:    "guest",
 	}
 	opts := tarantool.Opts{
