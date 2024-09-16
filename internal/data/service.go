@@ -9,18 +9,21 @@ import (
 
 type Source interface {
 	GetTaskRequests(ctx context.Context, limit int64) ([]domain.TaskRequest, error)
+	GetSupGwgrIds(ctx context.Context) ([]int64, error)
 }
 
 type Service interface {
 	GetTaskRequest() domain.TaskRequest
+	GetSupGwgrIds() []int64
 	Refresh(ctx context.Context, limit int64) error
 }
 
 type service struct {
-	dbSource Source
-	requests []domain.TaskRequest
-	mu       sync.Mutex
-	mark     int
+	dbSource   Source
+	supGwgrIds []int64
+	requests   []domain.TaskRequest
+	mu         sync.Mutex
+	mark       int
 }
 
 var _ Service = (*service)(nil)
@@ -36,6 +39,12 @@ func (s *service) Refresh(ctx context.Context, limit int64) error {
 	if err != nil {
 		return err
 	}
+
+	s.supGwgrIds, err = s.dbSource.GetSupGwgrIds(ctx)
+	if err != nil {
+		return err
+	}
+
 	return nil
 }
 
@@ -48,4 +57,8 @@ func (s *service) GetTaskRequest() domain.TaskRequest {
 		s.mark = 0
 	}
 	return s.requests[s.mark]
+}
+
+func (s *service) GetSupGwgrIds() []int64 {
+	return s.supGwgrIds
 }

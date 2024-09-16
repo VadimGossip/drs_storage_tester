@@ -22,6 +22,7 @@ const (
 
 type Repository interface {
 	GetTaskRequests(ctx context.Context, limit int64) ([]domain.TaskRequest, error)
+	GetSupGwgrIds(ctx context.Context) ([]int64, error)
 }
 
 type repository struct {
@@ -103,6 +104,32 @@ func (r *repository) GetTaskRequests(ctx context.Context, limit int64) ([]domain
 		}
 
 		result = append(result, item)
+	}
+
+	return result, nil
+}
+
+func (r *repository) GetSupGwgrIds(ctx context.Context) ([]int64, error) {
+	rows, err := r.db.DB().QueryContext(ctx, sqlSUPGWQuery)
+	if err != nil {
+		return nil, err
+	}
+	defer func() {
+		if err = rows.Close(); err != nil {
+			logrus.WithFields(logrus.Fields{
+				"handler": "GetSupGwgrIds",
+				"problem": "rows close",
+			}).Error(err)
+		}
+	}()
+
+	var gwgrId int64
+	result := make([]int64, 0)
+	for rows.Next() {
+		if err = rows.Scan(&gwgrId); err != nil {
+			return nil, err
+		}
+		result = append(result, gwgrId)
 	}
 
 	return result, nil

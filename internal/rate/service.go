@@ -2,12 +2,14 @@ package rate
 
 import (
 	"context"
+	"fmt"
 	"github.com/VadimGossip/tj-drs-storage/pkg/util"
 	"time"
 )
 
 type Service interface {
 	FindRate(ctx context.Context, gwgrId, dateAt int64, dir uint8, aNumber, bNumber uint64) (int64, float64, time.Duration, error)
+	FindSupRates(ctx context.Context, gwgrIds []int64, dateAt int64, aNumber, bNumber uint64) (int64, time.Duration, error)
 }
 
 type service struct {
@@ -61,4 +63,8 @@ func (s *service) FindRate(ctx context.Context, gwgrId, dateAt int64, dir uint8,
 	}
 
 	return rmsrId, util.RoundFloat(rv.Price*currencyRate, 7), totalDur, nil
+}
+
+func (s *service) FindSupRates(ctx context.Context, gwgrIds []int64, dateAt int64, aNumber, bNumber uint64) (int64, time.Duration, error) {
+	return 0, 0, fmt.Errorf("unimplemented")
 }

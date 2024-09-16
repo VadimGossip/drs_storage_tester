@@ -42,9 +42,21 @@ func (s *service) addDurationToSummary(durSummary *domain.DurationSummary, dur t
 	return
 }
 
-func (s *service) sendDbRequest(ctx context.Context, req domain.TaskRequest, summary *domain.TaskSummary, mu *sync.Mutex) error {
+func (s *service) sendFindRateRequest(ctx context.Context, req domain.TaskRequest, summary *domain.TaskSummary, mu *sync.Mutex) error {
 	ts := time.Now()
 	_, _, dbDur, err := s.rate.FindRate(ctx, req.GwgrId, ts.Unix(), 0, req.Anumber, req.Bnumber)
+	if err != nil {
+		return err
+	}
+
+	s.addDurationToSummary(summary.TotalDuration, time.Since(ts), mu)
+	s.addDurationToSummary(summary.DbDuration, dbDur, mu)
+
+	return nil
+}
+func (s *service) sendFindSupRatesRequest(ctx context.Context, supGwgrIds []int64, req domain.TaskRequest, summary *domain.TaskSummary, mu *sync.Mutex) error {
+	ts := time.Now()
+	_, dbDur, err := s.rate.FindSupRates(ctx, supGwgrIds, ts.Unix(), req.Anumber, req.Bnumber)
 	if err != nil {
 		return err
 	}
@@ -67,8 +79,8 @@ func (s *service) RunTests(ctx context.Context, task *domain.Task) error {
 			wg.Add(1)
 			go func(wg *sync.WaitGroup) {
 				defer wg.Done()
-				if err := s.sendDbRequest(ctx, s.data.GetTaskRequest(), task.Summary, mu); err != nil {
-					logrus.Errorf("sendDbRequest err %s", err)
+				if err := s.sendFindSupRatesRequest(ctx, s.data.GetSupGwgrIds(), s.data.GetTaskRequest(), task.Summary, mu); err != nil {
+					logrus.Errorf("sendFindSupRatesRequest err %s", err)
 				}
 			}(wg)
 		}

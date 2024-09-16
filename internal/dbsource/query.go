@@ -1,24 +1,8 @@
 package dbsource
 
-const sqlReadyRequestsQuery string = `
-	select c.src_gwgr_id
-		  ,c.anumber_in
-		  ,c.bnumber_in
-		  ,c.anumber_out
-		  ,c.bnumber_out
-		  ,c.ip
-		  ,c.prefix
-	  from cdr_based_drs_test_data c
-`
-
-const sqlReadyRequestsLimitQuery string = `
-	select c.src_gwgr_id
-		  ,c.anumber_in
-		  ,c.bnumber_in
-		  ,c.anumber_out
-		  ,c.bnumber_out
-		  ,c.ip
-		  ,c.prefix
-	  from cdr_based_drs_test_data c
-	 where rownum <= %d 
-`
+const sqlSUPGWQuery = `
+     select distinct g.gw_gwgr_id    
+      from gateways g
+      join prefixes p on g.gw_id = p.pfx_gw_id
+     where g.gw_orig_ability = 1
+       and p.pfx_direction = 'originate'`

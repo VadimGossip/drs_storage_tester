@@ -14,7 +14,8 @@ import (
 var _ def.RateRepository = (*repository)(nil)
 
 const (
-	findRateFunc string = "rates.find_rate"
+	findRateFunc     string = "rates.find_rate"
+	findSupRatesFunc string = "rates.find_sup_rates"
 )
 
 type repository struct {
@@ -28,7 +29,7 @@ func NewRepository(db db.Client) *repository {
 }
 func (r *repository) FindRate(gwgrId, dateAt int64, dir uint8, aNumber, bNumber string) (int64, float64, time.Duration, error) {
 	ts := time.Now()
-	resp, err := r.db.DB().Do(tarantool.NewCallRequest("rates.find_rate").Args([]interface{}{gwgrId, dateAt, dir, aNumber, bNumber})).Get()
+	resp, err := r.db.DB().Do(tarantool.NewCallRequest(findRateFunc).Args([]interface{}{gwgrId, dateAt, dir, aNumber, bNumber})).Get()
 	if err != nil {
 		return 0, 0, time.Since(ts), err
 	}
@@ -37,4 +38,17 @@ func (r *repository) FindRate(gwgrId, dateAt int64, dir uint8, aNumber, bNumber 
 	}
 
 	return 0, 0, time.Since(ts), fmt.Errorf("unexpected response length %d", len(resp))
+}
+
+func (r *repository) FindSupRates(gwgrIds []int64, dateAt int64, aNumber, bNumber string) (int64, time.Duration, error) {
+	ts := time.Now()
+	resp, err := r.db.DB().Do(tarantool.NewCallRequest(findSupRatesFunc).Args([]interface{}{gwgrIds, dateAt, aNumber, bNumber})).Get()
+	if err != nil {
+		return 0, time.Since(ts), err
+	}
+	if len(resp) == 0 {
+		return 0, time.Since(ts), fmt.Errorf("unexpected response length %d", len(resp))
+	}
+
+	return int64(len(resp)), time.Since(ts), nil
 }
