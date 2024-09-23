@@ -77,10 +77,12 @@ func (s *service) RunTests(ctx context.Context) error {
 		Summary: &model.TaskSummary{
 			Total: s.cfg.TotalRequests(),
 			DbDuration: &model.DurationSummary{
-				EMA: util.NewEMA(0.01),
+				EMA:       util.NewEMA(0.01),
+				Histogram: make(map[float64]int),
 			},
 			TotalDuration: &model.DurationSummary{
-				EMA: util.NewEMA(0.01),
+				EMA:       util.NewEMA(0.01),
+				Histogram: make(map[float64]int),
 			},
 		},
 	}
