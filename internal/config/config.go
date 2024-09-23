@@ -19,6 +19,7 @@ type TarantoolConfig interface {
 	Address() string
 	Username() string
 	Password() string
+	Timeout() time.Duration
 }
 
 type RateGrpcConfig interface {

@@ -178,11 +178,13 @@ func (s *serviceProvider) KeyDbClient(ctx context.Context) keydb.Client {
 
 func (s *serviceProvider) TarantoolClient(ctx context.Context) tarantool.Client {
 	if s.tarantoolClient == nil {
-		cl, err := tdb.New(ctx,
-			s.TarantoolConfig().Address(),
-			s.TarantoolConfig().Username(),
-			s.TarantoolConfig().Password(),
-		)
+		cl, err := tdb.New(ctx, tdb.ClientOptions{
+			Addr:     s.TarantoolConfig().Address(),
+			Username: s.TarantoolConfig().Username(),
+			Password: s.TarantoolConfig().Password(),
+			Timeout:  s.TarantoolConfig().Timeout(),
+		})
+
 		if err != nil {
 			logrus.Fatalf("failed to create tarantool client: %s", err)
 		}
