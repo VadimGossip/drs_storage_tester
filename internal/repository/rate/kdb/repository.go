@@ -8,9 +8,9 @@ import (
 	"strconv"
 	"time"
 
+	db "github.com/VadimGossip/platform_common/pkg/db/keydb"
 	"github.com/redis/go-redis/v9"
 
-	db "github.com/VadimGossip/drs_storage_tester/internal/client/db/keydb"
 	"github.com/VadimGossip/drs_storage_tester/internal/model"
 	def "github.com/VadimGossip/drs_storage_tester/internal/repository"
 	"github.com/VadimGossip/drs_storage_tester/pkg/util"

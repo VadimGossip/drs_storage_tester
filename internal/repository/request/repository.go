@@ -5,9 +5,9 @@ import (
 	"strconv"
 
 	sq "github.com/Masterminds/squirrel"
+	db "github.com/VadimGossip/platform_common/pkg/db/oracle"
 	"github.com/sirupsen/logrus"
 
-	db "github.com/VadimGossip/drs_storage_tester/internal/client/db/oracle"
 	"github.com/VadimGossip/drs_storage_tester/internal/model"
 	def "github.com/VadimGossip/drs_storage_tester/internal/repository"
 )

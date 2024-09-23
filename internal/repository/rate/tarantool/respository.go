@@ -5,7 +5,7 @@ import (
 	"fmt"
 	"time"
 
-	db "github.com/VadimGossip/drs_storage_tester/internal/client/db/tarantool"
+	db "github.com/VadimGossip/platform_common/pkg/db/tarantool"
 	"github.com/tarantool/go-tarantool/v2"
 
 	def "github.com/VadimGossip/drs_storage_tester/internal/repository"
