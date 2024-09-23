@@ -3,7 +3,11 @@ package event
 import (
 	"context"
 	"time"
+
+	def "github.com/VadimGossip/drs_storage_tester/internal/service"
 )
+
+var _ def.EventService = (*service)(nil)
 
 type genEventsDetails struct {
 	packSize     int
@@ -12,10 +16,6 @@ type genEventsDetails struct {
 	pps          int
 	total        int
 	tickerStep   time.Duration
-}
-
-type Service interface {
-	RunEventGeneration(ctx context.Context, total, rps, pps int)
 }
 
 type service struct {

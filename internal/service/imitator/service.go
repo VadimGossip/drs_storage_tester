@@ -3,32 +3,35 @@ package imitator
 import (
 	"context"
 	"fmt"
-	"github.com/VadimGossip/drs_storage_tester/internal/data"
-	"github.com/VadimGossip/drs_storage_tester/internal/domain"
-	"github.com/VadimGossip/drs_storage_tester/internal/event"
-	"github.com/VadimGossip/drs_storage_tester/internal/rate"
-	"github.com/VadimGossip/drs_storage_tester/pkg/util"
-	"github.com/sirupsen/logrus"
+	"github.com/VadimGossip/drs_storage_tester/internal/config"
 	"sync"
 	"time"
+
+	"github.com/sirupsen/logrus"
+
+	"github.com/VadimGossip/drs_storage_tester/internal/model"
+	def "github.com/VadimGossip/drs_storage_tester/internal/service"
+	"github.com/VadimGossip/drs_storage_tester/internal/service/event"
+	"github.com/VadimGossip/drs_storage_tester/pkg/util"
 )
 
-type Service interface {
-	RunTests(ctx context.Context, task *domain.Task) error
-}
+var _ def.ImitatorService = (*service)(nil)
 
 type service struct {
-	rate rate.Service
-	data data.Service
+	cfg  config.ImitatorConfig
+	rate def.RateService
+	data def.DataService
 }
 
-var _ Service = (*service)(nil)
-
-func NewService(rate rate.Service, data data.Service) *service {
-	return &service{rate: rate, data: data}
+func NewService(cfg config.ImitatorConfig,
+	rate def.RateService,
+	data def.DataService) *service {
+	return &service{cfg: cfg,
+		rate: rate,
+		data: data}
 }
 
-func (s *service) addDurationToSummary(durSummary *domain.DurationSummary, dur time.Duration, mu *sync.Mutex) {
+func (s *service) addDurationToSummary(durSummary *model.DurationSummary, dur time.Duration, mu *sync.Mutex) {
 	mu.Lock()
 	defer mu.Unlock()
 	if durSummary.Min > dur {
@@ -42,7 +45,7 @@ func (s *service) addDurationToSummary(durSummary *domain.DurationSummary, dur t
 	return
 }
 
-func (s *service) sendFindRateRequest(ctx context.Context, req domain.TaskRequest, summary *domain.TaskSummary, mu *sync.Mutex) error {
+func (s *service) sendFindRateRequest(ctx context.Context, req model.TaskRequest, summary *model.TaskSummary, mu *sync.Mutex) error {
 	ts := time.Now()
 	_, _, dbDur, err := s.rate.FindRate(ctx, req.GwgrId, ts.Unix(), 0, req.Anumber, req.Bnumber)
 	if err != nil {
@@ -54,7 +57,7 @@ func (s *service) sendFindRateRequest(ctx context.Context, req domain.TaskReques
 
 	return nil
 }
-func (s *service) sendFindSupRatesRequest(ctx context.Context, supGwgrIds []int64, req domain.TaskRequest, summary *domain.TaskSummary, mu *sync.Mutex) error {
+func (s *service) sendFindSupRatesRequest(ctx context.Context, supGwgrIds []int64, req model.TaskRequest, summary *model.TaskSummary, mu *sync.Mutex) error {
 	ts := time.Now()
 	_, dbDur, err := s.rate.FindSupRates(ctx, supGwgrIds, ts.Unix(), req.Anumber, req.Bnumber)
 	if err != nil {
@@ -67,7 +70,21 @@ func (s *service) sendFindSupRatesRequest(ctx context.Context, supGwgrIds []int6
 	return nil
 }
 
-func (s *service) RunTests(ctx context.Context, task *domain.Task) error {
+func (s *service) RunTests(ctx context.Context) error {
+	task := model.Task{
+		RequestsPerSec: s.cfg.RequestPerSecond(),
+		PackPerSec:     s.cfg.PackPerSecond(),
+		Summary: &model.TaskSummary{
+			Total: s.cfg.TotalRequests(),
+			DbDuration: &model.DurationSummary{
+				EMA: util.NewEMA(0.01),
+			},
+			TotalDuration: &model.DurationSummary{
+				EMA: util.NewEMA(0.01),
+			},
+		},
+	}
+
 	if err := s.data.Refresh(ctx, int64(task.Summary.Total)); err != nil {
 		return err
 	}
@@ -79,7 +96,13 @@ func (s *service) RunTests(ctx context.Context, task *domain.Task) error {
 			wg.Add(1)
 			go func(wg *sync.WaitGroup) {
 				defer wg.Done()
-				if err := s.sendFindSupRatesRequest(ctx, s.data.GetSupGwgrIds(), s.data.GetTaskRequest(), task.Summary, mu); err != nil {
+				if s.cfg.RequestType() == s.cfg.AllSupplierRequestType() {
+					if err := s.sendFindSupRatesRequest(ctx, s.data.GetSupGwgrIds(), s.data.GetTaskRequest(), task.Summary, mu); err != nil {
+						logrus.Errorf("sendFindSupRatesRequest err %s", err)
+					}
+					return
+				}
+				if err := s.sendFindRateRequest(ctx, s.data.GetTaskRequest(), task.Summary, mu); err != nil {
 					logrus.Errorf("sendFindSupRatesRequest err %s", err)
 				}
 			}(wg)

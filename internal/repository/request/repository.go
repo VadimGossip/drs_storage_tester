@@ -1,4 +1,4 @@
-package dbsource
+package request
 
 import (
 	"context"
@@ -8,8 +8,11 @@ import (
 	"github.com/sirupsen/logrus"
 
 	db "github.com/VadimGossip/drs_storage_tester/internal/client/db/oracle"
-	"github.com/VadimGossip/drs_storage_tester/internal/domain"
+	"github.com/VadimGossip/drs_storage_tester/internal/model"
+	def "github.com/VadimGossip/drs_storage_tester/internal/repository"
 )
+
+var _ def.RequestRepository = (*repository)(nil)
 
 const (
 	cdrTableName     = "cdr_based_drs_test_data"
@@ -20,22 +23,15 @@ const (
 	bnumberOutColumn = "bnumber_out"
 )
 
-type Repository interface {
-	GetTaskRequests(ctx context.Context, limit int64) ([]domain.TaskRequest, error)
-	GetSupGwgrIds(ctx context.Context) ([]int64, error)
-}
-
 type repository struct {
 	db db.Client
 }
-
-var _ Repository = (*repository)(nil)
 
 func NewRepository(db db.Client) *repository {
 	return &repository{db: db}
 }
 
-func (r *repository) GetTaskRequests(ctx context.Context, limit int64) ([]domain.TaskRequest, error) {
+func (r *repository) GetTaskRequests(ctx context.Context, limit int64) ([]model.TaskRequest, error) {
 	cdrSelect := sq.Select(srcGwgrIdColumn,
 		anumberInColumn,
 		bnumberInColumn,
@@ -69,7 +65,7 @@ func (r *repository) GetTaskRequests(ctx context.Context, limit int64) ([]domain
 	var gwgrId int64
 	var anumberIn, bnumberIn, anumberOut, bnumberOut uint64
 	var anumberInStr, bnumberInStr, anumberOutStr, bnumberOutStr string
-	result := make([]domain.TaskRequest, 0)
+	result := make([]model.TaskRequest, 0)
 	for rows.Next() {
 		if err = rows.Scan(&gwgrId, &anumberInStr, &bnumberInStr, &anumberOutStr, &bnumberOutStr); err != nil {
 			return nil, err
@@ -95,7 +91,7 @@ func (r *repository) GetTaskRequests(ctx context.Context, limit int64) ([]domain
 			continue
 		}
 
-		item := domain.TaskRequest{
+		item := model.TaskRequest{
 			GwgrId:      gwgrId,
 			OrigAnumber: anumberIn,
 			OrigBnumber: bnumberIn,

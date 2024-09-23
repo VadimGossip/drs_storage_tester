@@ -2,15 +2,13 @@ package app
 
 import (
 	"context"
-	"fmt"
-	"github.com/VadimGossip/drs_storage_tester/internal/closer"
+	"log"
 	"os"
 	"time"
 
+	"github.com/VadimGossip/platform_common/pkg/closer"
+	"github.com/joho/godotenv"
 	"github.com/sirupsen/logrus"
-
-	"github.com/VadimGossip/drs_storage_tester/internal/config"
-	"github.com/VadimGossip/drs_storage_tester/internal/domain"
 )
 
 func init() {
@@ -24,13 +22,11 @@ type App struct {
 	name            string
 	configDir       string
 	appStartedAt    time.Time
-	cfg             *domain.Config
 }
 
-func NewApp(ctx context.Context, name, configDir string, appStartedAt time.Time) (*App, error) {
+func NewApp(ctx context.Context, name string, appStartedAt time.Time) (*App, error) {
 	a := &App{
 		name:         name,
-		configDir:    configDir,
 		appStartedAt: appStartedAt,
 	}
 
@@ -57,17 +53,15 @@ func (a *App) initDeps(ctx context.Context) error {
 }
 
 func (a *App) initConfig(_ context.Context) error {
-	cfg, err := config.Init(a.configDir)
+	err := godotenv.Load()
 	if err != nil {
-		return fmt.Errorf("[%s] config initialization error: %s", a.name, err)
+		log.Fatal("Error loading .env file")
 	}
-	a.cfg = cfg
-	logrus.Infof("[%s] got config: [%+v]", a.name, *a.cfg)
 	return nil
 }
 
 func (a *App) initServiceProvider(_ context.Context) error {
-	a.serviceProvider = newServiceProvider(a.cfg)
+	a.serviceProvider = newServiceProvider()
 	return nil
 }
 
@@ -78,7 +72,7 @@ func (a *App) Run(ctx context.Context) error {
 		logrus.Infof("[%s] stopped", a.name)
 	}()
 	logrus.Infof("[%s] started", a.name)
-	if err := a.serviceProvider.ImitatorService(ctx).RunTests(ctx, a.cfg.Task); err != nil {
+	if err := a.serviceProvider.ImitatorService(ctx).RunTests(ctx); err != nil {
 		logrus.Errorf("[%s] fail to run tests: %s", a.name, err)
 		return err
 	}

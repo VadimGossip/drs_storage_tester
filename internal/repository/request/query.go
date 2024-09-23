@@ -1,4 +1,4 @@
-package dbsource
+package request
 
 const sqlSUPGWQuery = `
      select distinct g.gw_gwgr_id    

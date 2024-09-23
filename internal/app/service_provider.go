@@ -2,62 +2,144 @@ package app
 
 import (
 	"context"
-	"fmt"
 	"log"
 
-	"github.com/VadimGossip/drs_storage_tester/internal/client/db/tarantool"
-	"github.com/VadimGossip/drs_storage_tester/internal/client/db/tarantool/tdb"
-	"github.com/VadimGossip/drs_storage_tester/internal/repository"
-
-	tRateRepo "github.com/VadimGossip/drs_storage_tester/internal/repository/rate/tarantool"
-	"github.com/VadimGossip/drs_storage_tester/internal/service"
-	tRateService "github.com/VadimGossip/drs_storage_tester/internal/service/rate"
+	"github.com/VadimGossip/platform_common/pkg/closer"
+	"github.com/VadimGossip/platform_common/pkg/db/keydb"
+	"github.com/VadimGossip/platform_common/pkg/db/keydb/kdb"
+	"github.com/VadimGossip/platform_common/pkg/db/oracle"
+	"github.com/VadimGossip/platform_common/pkg/db/oracle/odb"
+	"github.com/VadimGossip/platform_common/pkg/db/tarantool"
+	"github.com/VadimGossip/platform_common/pkg/db/tarantool/tdb"
 	"github.com/sirupsen/logrus"
 
-	"github.com/VadimGossip/drs_storage_tester/internal/client/db/keydb"
-	"github.com/VadimGossip/drs_storage_tester/internal/client/db/keydb/kdb"
-	"github.com/VadimGossip/drs_storage_tester/internal/client/db/oracle"
-	"github.com/VadimGossip/drs_storage_tester/internal/client/db/oracle/odb"
-	"github.com/VadimGossip/drs_storage_tester/internal/closer"
-	"github.com/VadimGossip/drs_storage_tester/internal/data"
-	"github.com/VadimGossip/drs_storage_tester/internal/dbsource"
-	"github.com/VadimGossip/drs_storage_tester/internal/domain"
-	"github.com/VadimGossip/drs_storage_tester/internal/imitator"
-	"github.com/VadimGossip/drs_storage_tester/internal/rate"
+	"github.com/VadimGossip/drs_storage_tester/internal/client/grpc"
+	rateGrpc "github.com/VadimGossip/drs_storage_tester/internal/client/grpc/rate"
+	"github.com/VadimGossip/drs_storage_tester/internal/config"
+	clientCfg "github.com/VadimGossip/drs_storage_tester/internal/config/client"
+	dbCfg "github.com/VadimGossip/drs_storage_tester/internal/config/db"
+	serviceCfg "github.com/VadimGossip/drs_storage_tester/internal/config/service"
+	"github.com/VadimGossip/drs_storage_tester/internal/repository"
+	kdbRateRepo "github.com/VadimGossip/drs_storage_tester/internal/repository/rate/kdb"
+	tarantoolRateRepo "github.com/VadimGossip/drs_storage_tester/internal/repository/rate/tarantool"
+	requestRepo "github.com/VadimGossip/drs_storage_tester/internal/repository/request"
+	"github.com/VadimGossip/drs_storage_tester/internal/service"
+	dataService "github.com/VadimGossip/drs_storage_tester/internal/service/data"
+	eventService "github.com/VadimGossip/drs_storage_tester/internal/service/event"
+	imitatorService "github.com/VadimGossip/drs_storage_tester/internal/service/imitator"
+	rateService "github.com/VadimGossip/drs_storage_tester/internal/service/rate"
+	requestService "github.com/VadimGossip/drs_storage_tester/internal/service/request"
 )
 
 type serviceProvider struct {
-	cfg          *domain.Config
-	odbClient    oracle.Client
-	txManager    oracle.TxManager
-	dbSourceRepo dbsource.Repository
+	oracleConfig          config.OracleConfig
+	kdbConfig             config.KdbConfig
+	tarantoolConfig       config.TarantoolConfig
+	rateGrpcConfig        config.RateGrpcConfig
+	serviceProviderConfig config.ServiceProviderConfig
+	imitatorConfig        config.ImitatorConfig
 
-	kdbClient keydb.Client
-	rateRepo  rate.Repository
+	odbClient       oracle.Client
+	txManager       oracle.TxManager
+	kdbClient       keydb.Client
+	tarantoolClient tarantool.Client
+	rateGrpcClient  grpc.RateClient
 
-	tarantoolClient   tarantool.Client
-	tarantoolRateRepo repository.RateRepository
+	rateRepo    repository.RateRepository
+	requestRepo repository.RequestRepository
 
-	dbSourceService dbsource.Service
-	dataService     data.Service
-	rateService     rate.Service
-	tRateService    service.RateService
-	imitatorService imitator.Service
+	requestService  service.RequestService
+	dataService     service.DataService
+	eventService    service.EventService
+	rateService     service.RateService
+	imitatorService service.ImitatorService
 }
 
-func newServiceProvider(cfg *domain.Config) *serviceProvider {
-	return &serviceProvider{cfg: cfg}
+func newServiceProvider() *serviceProvider {
+	return &serviceProvider{}
+}
+
+func (s *serviceProvider) OracleConfig() config.OracleConfig {
+	if s.oracleConfig == nil {
+		cfg, err := dbCfg.NewOracleConfig()
+		if err != nil {
+			log.Fatalf("failed to get oracleConfig: %s", err)
+		}
+
+		s.oracleConfig = cfg
+	}
+
+	return s.oracleConfig
+}
+
+func (s *serviceProvider) KdbConfig() config.KdbConfig {
+	if s.kdbConfig == nil {
+		cfg, err := dbCfg.NewKdbConfig()
+		if err != nil {
+			log.Fatalf("failed to get kdbConfig: %s", err)
+		}
+
+		s.kdbConfig = cfg
+	}
+
+	return s.kdbConfig
+}
+
+func (s *serviceProvider) TarantoolConfig() config.TarantoolConfig {
+	if s.tarantoolConfig == nil {
+		cfg, err := dbCfg.NewTarantoolConfig()
+		if err != nil {
+			log.Fatalf("failed to get tarantoolConfig: %s", err)
+		}
+
+		s.tarantoolConfig = cfg
+	}
+
+	return s.tarantoolConfig
+}
+
+func (s *serviceProvider) RateGRPCClientConfig() config.RateGrpcConfig {
+	if s.rateGrpcConfig == nil {
+		cfg, err := clientCfg.NewRateGRPCConfig()
+		if err != nil {
+			log.Fatalf("failed to get rateGrpcConfig: %s", err)
+		}
+
+		s.rateGrpcConfig = cfg
+	}
+
+	return s.rateGrpcConfig
+}
+
+func (s *serviceProvider) ServiceProviderConfig() config.ServiceProviderConfig {
+	if s.serviceProviderConfig == nil {
+		cfg, err := serviceCfg.NewServiceProviderConfig()
+		if err != nil {
+			log.Fatalf("failed to get serviceProviderConfig: %s", err)
+		}
+
+		s.serviceProviderConfig = cfg
+	}
+
+	return s.serviceProviderConfig
+}
+
+func (s *serviceProvider) ImitatorConfig() config.ImitatorConfig {
+	if s.imitatorConfig == nil {
+		cfg, err := serviceCfg.NewImitatorConfig()
+		if err != nil {
+			log.Fatalf("failed to get imitatorConfig: %s", err)
+		}
+
+		s.imitatorConfig = cfg
+	}
+
+	return s.imitatorConfig
 }
 
 func (s *serviceProvider) OdbClient(ctx context.Context) oracle.Client {
 	if s.odbClient == nil {
-		dsn := fmt.Sprintf(`user=%s password=%s connectString=%s:%d/%s`,
-			s.cfg.DataSourceDb.Username,
-			s.cfg.DataSourceDb.Password,
-			s.cfg.DataSourceDb.Host,
-			s.cfg.DataSourceDb.Port,
-			s.cfg.DataSourceDb.Service)
-		cl, err := odb.New(dsn)
+		cl, err := odb.New(s.OracleConfig().DSN())
 		if err != nil {
 			logrus.Fatalf("failed to create odb client: %s", err)
 		}
@@ -74,7 +156,14 @@ func (s *serviceProvider) OdbClient(ctx context.Context) oracle.Client {
 
 func (s *serviceProvider) KeyDbClient(ctx context.Context) keydb.Client {
 	if s.kdbClient == nil {
-		cl := kdb.New(s.cfg.TargetDb)
+		cl := kdb.New(kdb.ClientOptions{
+			Addr:         s.KdbConfig().Address(),
+			Username:     s.KdbConfig().Username(),
+			Password:     s.KdbConfig().Password(),
+			DB:           s.KdbConfig().DB(),
+			ReadTimeout:  s.KdbConfig().ReadTimeoutSec(),
+			WriteTimeout: s.KdbConfig().ReadTimeoutSec(),
+		})
 
 		if err := cl.DB().Ping(ctx); err != nil {
 			log.Fatalf("kdb ping error: %s", err)
@@ -89,7 +178,11 @@ func (s *serviceProvider) KeyDbClient(ctx context.Context) keydb.Client {
 
 func (s *serviceProvider) TarantoolClient(ctx context.Context) tarantool.Client {
 	if s.tarantoolClient == nil {
-		cl, err := tdb.New(ctx, "todo_config")
+		cl, err := tdb.New(ctx,
+			s.TarantoolConfig().Address(),
+			s.TarantoolConfig().Username(),
+			s.TarantoolConfig().Password(),
+		)
 		if err != nil {
 			logrus.Fatalf("failed to create tarantool client: %s", err)
 		}
@@ -100,58 +193,70 @@ func (s *serviceProvider) TarantoolClient(ctx context.Context) tarantool.Client 
 	return s.tarantoolClient
 }
 
-func (s *serviceProvider) DbSourceRepo(ctx context.Context) dbsource.Repository {
-	if s.dbSourceRepo == nil {
-		s.dbSourceRepo = dbsource.NewRepository(s.OdbClient(ctx))
+func (s *serviceProvider) RateGRPCClient() grpc.RateClient {
+	if s.rateGrpcClient == nil {
+		grpcAuthClient, err := rateGrpc.NewClient(s.RateGRPCClientConfig())
+		if err != nil {
+			logrus.Fatalf("failed to create rateGrpcClient: %s", err)
+		}
+		s.rateGrpcClient = grpcAuthClient
 	}
-	return s.dbSourceRepo
+	return s.rateGrpcClient
 }
 
-func (s *serviceProvider) RateRepo(ctx context.Context) rate.Repository {
+func (s *serviceProvider) RateRepo(ctx context.Context) repository.RateRepository {
 	if s.rateRepo == nil {
-		s.rateRepo = rate.NewRepository(s.KeyDbClient(ctx))
+		testDb := s.ServiceProviderConfig().TestDB()
+		if testDb == s.ServiceProviderConfig().TarantoolTestDB() {
+			s.rateRepo = tarantoolRateRepo.NewRepository(s.TarantoolClient(ctx))
+		} else if testDb == s.ServiceProviderConfig().KdbTestDB() {
+			s.rateRepo = kdbRateRepo.NewRepository(s.KeyDbClient(ctx))
+		} else {
+			s.rateRepo = s.RateGRPCClient()
+		}
+
 	}
 	return s.rateRepo
 }
 
-func (s *serviceProvider) TRateRepo(ctx context.Context) repository.RateRepository {
-	if s.tarantoolRateRepo == nil {
-		s.tarantoolRateRepo = tRateRepo.NewRepository(s.TarantoolClient(ctx))
+func (s *serviceProvider) RequestRepo(ctx context.Context) repository.RequestRepository {
+	if s.requestRepo == nil {
+		s.requestRepo = requestRepo.NewRepository(s.OdbClient(ctx))
 	}
-	return s.tarantoolRateRepo
+	return s.requestRepo
 }
 
-func (s *serviceProvider) DbSourceService(ctx context.Context) dbsource.Service {
-	if s.dbSourceService == nil {
-		s.dbSourceService = dbsource.NewService(s.DbSourceRepo(ctx))
+func (s *serviceProvider) RequestService(ctx context.Context) service.RequestService {
+	if s.requestService == nil {
+		s.requestService = requestService.NewService(s.RequestRepo(ctx))
 	}
-	return s.dbSourceService
+	return s.requestService
 }
 
-func (s *serviceProvider) DataService(ctx context.Context) data.Service {
+func (s *serviceProvider) DataService(ctx context.Context) service.DataService {
 	if s.dataService == nil {
-		s.dataService = data.NewService(s.DbSourceService(ctx))
+		s.dataService = dataService.NewService(s.RequestService(ctx))
 	}
 	return s.dataService
 }
 
-func (s *serviceProvider) RateService(ctx context.Context) rate.Service {
+func (s *serviceProvider) EventService() service.EventService {
+	if s.eventService == nil {
+		s.eventService = eventService.NewService()
+	}
+	return s.eventService
+}
+
+func (s *serviceProvider) RateService(ctx context.Context) service.RateService {
 	if s.rateService == nil {
-		s.rateService = rate.NewService(s.RateRepo(ctx))
+		s.rateService = rateService.NewService(s.RateRepo(ctx))
 	}
 	return s.rateService
 }
 
-func (s *serviceProvider) TRateService(ctx context.Context) service.RateService {
-	if s.tRateService == nil {
-		s.tRateService = tRateService.NewService(s.TRateRepo(ctx))
-	}
-	return s.tRateService
-}
-
-func (s *serviceProvider) ImitatorService(ctx context.Context) imitator.Service {
+func (s *serviceProvider) ImitatorService(ctx context.Context) service.ImitatorService {
 	if s.imitatorService == nil {
-		s.imitatorService = imitator.NewService(s.TRateService(ctx), s.DataService(ctx))
+		s.imitatorService = imitatorService.NewService(s.ImitatorConfig(), s.RateService(ctx), s.DataService(ctx))
 	}
 	return s.imitatorService
 }

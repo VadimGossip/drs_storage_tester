@@ -1,14 +1,14 @@
 package tarantool
 
 import (
+	"context"
 	"fmt"
 	"time"
 
 	db "github.com/VadimGossip/drs_storage_tester/internal/client/db/tarantool"
+	"github.com/tarantool/go-tarantool/v2"
 
 	def "github.com/VadimGossip/drs_storage_tester/internal/repository"
-
-	"github.com/tarantool/go-tarantool/v2"
 )
 
 var _ def.RateRepository = (*repository)(nil)
@@ -27,7 +27,7 @@ func NewRepository(db db.Client) *repository {
 		db: db,
 	}
 }
-func (r *repository) FindRate(gwgrId, dateAt int64, dir uint8, aNumber, bNumber string) (int64, float64, time.Duration, error) {
+func (r *repository) FindRate(_ context.Context, gwgrId, dateAt int64, dir uint8, aNumber, bNumber string) (int64, float64, time.Duration, error) {
 	ts := time.Now()
 	resp, err := r.db.DB().Do(tarantool.NewCallRequest(findRateFunc).Args([]interface{}{gwgrId, dateAt, dir, aNumber, bNumber})).Get()
 	if err != nil {
@@ -40,7 +40,7 @@ func (r *repository) FindRate(gwgrId, dateAt int64, dir uint8, aNumber, bNumber 
 	return 0, 0, time.Since(ts), fmt.Errorf("unexpected response length %d", len(resp))
 }
 
-func (r *repository) FindSupRates(gwgrIds []int64, dateAt int64, aNumber, bNumber string) (int64, time.Duration, error) {
+func (r *repository) FindSupRates(_ context.Context, gwgrIds []int64, dateAt int64, aNumber, bNumber string) (int64, time.Duration, error) {
 	ts := time.Now()
 	resp, err := r.db.DB().Do(tarantool.NewCallRequest(findSupRatesFunc).Args([]interface{}{gwgrIds, dateAt, aNumber, bNumber})).Get()
 	if err != nil {

@@ -1,40 +1,42 @@
 package config
 
-import (
-	"github.com/VadimGossip/drs_storage_tester/pkg/util"
-	"github.com/spf13/viper"
+import "time"
 
-	"github.com/VadimGossip/drs_storage_tester/internal/domain"
-)
-
-func parseConfigFile(configDir string) error {
-	viper.AddConfigPath(configDir)
-	viper.SetConfigName("config")
-	return viper.ReadInConfig()
+type OracleConfig interface {
+	DSN() string
 }
 
-func unmarshal(cfg *domain.Config) error {
-	if err := viper.UnmarshalKey("keydb", &cfg.TargetDb); err != nil {
-		return err
-	}
-	if err := viper.UnmarshalKey("oracle", &cfg.DataSourceDb); err != nil {
-		return err
-	}
-	if err := viper.UnmarshalKey("task", &cfg.Task); err != nil {
-		return err
-	}
-	cfg.Task.Summary.DbDuration = &domain.DurationSummary{EMA: util.NewEMA(0.01), Histogram: make(map[float64]int)}
-	cfg.Task.Summary.TotalDuration = &domain.DurationSummary{EMA: util.NewEMA(0.01), Histogram: make(map[float64]int)}
-	return nil
+type KdbConfig interface {
+	Address() string
+	Username() string
+	Password() string
+	DB() int
+	ReadTimeoutSec() time.Duration
+	WriteTimeoutSec() time.Duration
 }
 
-func Init(configDir string) (*domain.Config, error) {
-	if err := parseConfigFile(configDir); err != nil {
-		return nil, err
-	}
-	cfg := &domain.Config{}
-	if err := unmarshal(cfg); err != nil {
-		return nil, err
-	}
-	return cfg, nil
+type TarantoolConfig interface {
+	Address() string
+	Username() string
+	Password() string
+}
+
+type RateGrpcConfig interface {
+	Address() string
+}
+
+type ImitatorConfig interface {
+	RequestType() string
+	AllSupplierRequestType() string
+	SingleRequestType() string
+	RequestPerSecond() int
+	PackPerSecond() int
+	TotalRequests() int
+}
+
+type ServiceProviderConfig interface {
+	TestDB() string
+	TarantoolTestDB() string
+	KdbTestDB() string
+	CacheTestDB() string
 }
