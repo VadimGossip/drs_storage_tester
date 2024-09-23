@@ -6,7 +6,7 @@ import (
 
 	"github.com/go-redis/redis/v8"
 
-	db "github.com/VadimGossip/tj-drs-storage/internal/client/db/keydb"
+	db "github.com/VadimGossip/drs_storage_tester/internal/client/db/keydb"
 )
 
 type kdb struct {

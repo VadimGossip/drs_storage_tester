@@ -7,8 +7,8 @@ import (
 	sq "github.com/Masterminds/squirrel"
 	"github.com/sirupsen/logrus"
 
-	db "github.com/VadimGossip/tj-drs-storage/internal/client/db/oracle"
-	"github.com/VadimGossip/tj-drs-storage/internal/domain"
+	db "github.com/VadimGossip/drs_storage_tester/internal/client/db/oracle"
+	"github.com/VadimGossip/drs_storage_tester/internal/domain"
 )
 
 const (

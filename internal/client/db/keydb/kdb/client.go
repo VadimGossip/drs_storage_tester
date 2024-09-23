@@ -6,8 +6,8 @@ import (
 
 	"github.com/go-redis/redis/v8"
 
-	db "github.com/VadimGossip/tj-drs-storage/internal/client/db/keydb"
-	"github.com/VadimGossip/tj-drs-storage/internal/domain"
+	db "github.com/VadimGossip/drs_storage_tester/internal/client/db/keydb"
+	"github.com/VadimGossip/drs_storage_tester/internal/domain"
 )
 
 type odbClient struct {

@@ -1,4 +1,4 @@
-module github.com/VadimGossip/tj-drs-storage
+module github.com/VadimGossip/drs_storage_tester
 
 go 1.21
 

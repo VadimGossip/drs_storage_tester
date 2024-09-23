@@ -6,16 +6,16 @@ keydb:
   db:
 
 oracle:
-  host:
-  port:
-  username:
-  password:
-  service:
+  host:      "score-test.telejet-soft.com"                # host for oracle
+  port:      1521                  # port for oracle
+  username:  "vtbs_drs_pref"       # username for oracle
+  password:  "sdjjaq3x"            # password for oracle
+  service:   "TELEJET"             # service for oracle
 
 task:
   requestsPerSec: 100
   packPerSec: 10
   summary:
-    total: 1000
+    total: 100
 
 

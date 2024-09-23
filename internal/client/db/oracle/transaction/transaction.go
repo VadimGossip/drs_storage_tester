@@ -6,8 +6,8 @@ import (
 
 	"github.com/pkg/errors"
 
-	db "github.com/VadimGossip/tj-drs-storage/internal/client/db/oracle"
-	"github.com/VadimGossip/tj-drs-storage/internal/client/db/oracle/odb"
+	db "github.com/VadimGossip/drs_storage_tester/internal/client/db/oracle"
+	"github.com/VadimGossip/drs_storage_tester/internal/client/db/oracle/odb"
 )
 
 type manager struct {

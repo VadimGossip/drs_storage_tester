@@ -3,7 +3,7 @@ package dbsource
 import (
 	"context"
 
-	"github.com/VadimGossip/tj-drs-storage/internal/domain"
+	"github.com/VadimGossip/drs_storage_tester/internal/domain"
 )
 
 type Service interface {

@@ -1,10 +1,10 @@
 package config
 
 import (
-	"github.com/VadimGossip/tj-drs-storage/pkg/util"
+	"github.com/VadimGossip/drs_storage_tester/pkg/util"
 	"github.com/spf13/viper"
 
-	"github.com/VadimGossip/tj-drs-storage/internal/domain"
+	"github.com/VadimGossip/drs_storage_tester/internal/domain"
 )
 
 func parseConfigFile(configDir string) error {

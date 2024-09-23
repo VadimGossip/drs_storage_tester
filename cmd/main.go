@@ -5,7 +5,7 @@ import (
 	"github.com/sirupsen/logrus"
 	"time"
 
-	"github.com/VadimGossip/tj-drs-storage/internal/app"
+	"github.com/VadimGossip/drs_storage_tester/internal/app"
 )
 
 var (

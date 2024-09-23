@@ -4,9 +4,9 @@ import (
 	"fmt"
 	"time"
 
-	db "github.com/VadimGossip/tj-drs-storage/internal/client/db/tarantool"
+	db "github.com/VadimGossip/drs_storage_tester/internal/client/db/tarantool"
 
-	def "github.com/VadimGossip/tj-drs-storage/internal/repository"
+	def "github.com/VadimGossip/drs_storage_tester/internal/repository"
 
 	"github.com/tarantool/go-tarantool/v2"
 )

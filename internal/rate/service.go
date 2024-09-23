@@ -3,7 +3,7 @@ package rate
 import (
 	"context"
 	"fmt"
-	"github.com/VadimGossip/tj-drs-storage/pkg/util"
+	"github.com/VadimGossip/drs_storage_tester/pkg/util"
 	"time"
 )
 

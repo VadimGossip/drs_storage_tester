@@ -3,14 +3,14 @@ package app
 import (
 	"context"
 	"fmt"
-	"github.com/VadimGossip/tj-drs-storage/internal/closer"
+	"github.com/VadimGossip/drs_storage_tester/internal/closer"
 	"os"
 	"time"
 
 	"github.com/sirupsen/logrus"
 
-	"github.com/VadimGossip/tj-drs-storage/internal/config"
-	"github.com/VadimGossip/tj-drs-storage/internal/domain"
+	"github.com/VadimGossip/drs_storage_tester/internal/config"
+	"github.com/VadimGossip/drs_storage_tester/internal/domain"
 )
 
 func init() {

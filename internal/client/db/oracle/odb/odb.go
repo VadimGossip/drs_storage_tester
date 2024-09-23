@@ -4,7 +4,7 @@ import (
 	"context"
 	"database/sql"
 
-	db "github.com/VadimGossip/tj-drs-storage/internal/client/db/oracle"
+	db "github.com/VadimGossip/drs_storage_tester/internal/client/db/oracle"
 )
 
 type key string
