@@ -6,7 +6,7 @@ toolchain go1.22.7
 
 require (
 	github.com/Masterminds/squirrel v1.5.4
-	github.com/VadimGossip/drs_data_loader v0.0.0-20240925182333-235e4cd10b65
+	github.com/VadimGossip/drs_data_loader v0.0.0-20240925192655-4036c73a8389
 	github.com/VadimGossip/platform_common v1.0.8
 	github.com/joho/godotenv v1.5.1
 	github.com/pkg/errors v0.9.1

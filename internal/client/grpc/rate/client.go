@@ -45,7 +45,7 @@ func (c *client) FindRate(ctx context.Context, gwgrId, dateAt int64, dir uint8, 
 
 func (c *client) FindSupRates(ctx context.Context, _ []int64, dateAt int64, aNumber, bNumber string) (map[int64]model.RateBase, time.Duration, error) {
 	ts := time.Now()
-	res, err := c.cl.FindAllSupRates(ctx, &descRate.FindSupRatesRequest{
+	res, err := c.cl.FindSupRates(ctx, &descRate.FindSupRatesRequest{
 		DateAt:  dateAt,
 		ANumber: aNumber,
 		BNumber: bNumber,
