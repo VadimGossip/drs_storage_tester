@@ -47,7 +47,7 @@ func (s *service) addDurationToSummary(durSummary *model.DurationSummary, dur ti
 
 func (s *service) sendFindRateRequest(ctx context.Context, req model.TaskRequest, summary *model.TaskSummary, mu *sync.Mutex) error {
 	ts := time.Now()
-	_, _, dbDur, err := s.rate.FindRate(ctx, req.GwgrId, ts.Unix(), 0, req.Anumber, req.Bnumber)
+	_, dbDur, err := s.rate.FindRate(ctx, req.GwgrId, ts.Unix(), 0, req.Anumber, req.Bnumber)
 	if err != nil {
 		return err
 	}
