@@ -6,7 +6,7 @@ toolchain go1.22.7
 
 require (
 	github.com/Masterminds/squirrel v1.5.4
-	github.com/VadimGossip/drs_data_loader v0.0.0-20240920180730-893300912d2d
+	github.com/VadimGossip/drs_data_loader v0.0.0-20240925182333-235e4cd10b65
 	github.com/VadimGossip/platform_common v1.0.8
 	github.com/joho/godotenv v1.5.1
 	github.com/pkg/errors v0.9.1
@@ -30,9 +30,9 @@ require (
 	github.com/vmihailenco/msgpack/v5 v5.3.5 // indirect
 	github.com/vmihailenco/tagparser/v2 v2.0.0 // indirect
 	golang.org/x/exp v0.0.0-20240719175910-8a7402abbf56 // indirect
-	golang.org/x/net v0.28.0 // indirect
-	golang.org/x/sys v0.24.0 // indirect
-	golang.org/x/text v0.17.0 // indirect
+	golang.org/x/net v0.29.0 // indirect
+	golang.org/x/sys v0.25.0 // indirect
+	golang.org/x/text v0.18.0 // indirect
 	google.golang.org/genproto/googleapis/rpc v0.0.0-20240814211410-ddb44dafa142 // indirect
 	google.golang.org/protobuf v1.34.2 // indirect
 )

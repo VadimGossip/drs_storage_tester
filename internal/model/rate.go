@@ -2,21 +2,11 @@ package model
 
 const (
 	SUPGWObjectKey  string = "SUPGW"
-	DSTRObjectKey   string = "DSTR"
-	DSTBObjectKey   string = "DSTB"
-	RLObjectKey     string = "RL"
-	SCDRObjectKey   string = "SCDR"
-	AADObjectKey    string = "AAD"
-	ABDObjectKey    string = "ABD"
-	ACObjectKey     string = "AC"
 	RAObjectKey     string = "RA"
 	RBObjectKey     string = "RB"
 	RTSObjectKey    string = "RTS"
 	RVObjectKey     string = "RV"
 	CURRTSObjectKey string = "CURRTS"
-	TAGSObjectKey   string = "TAGS"
-	DRSObjectKey    string = "DRS"
-	DRSGObjectKey   string = "DRSG"
 )
 
 type ARmsgKey struct {
@@ -61,4 +51,9 @@ type CurrencyRateHist struct {
 	CurrencyRate float64
 	DBegin       int64
 	DEnd         int64
+}
+
+type RateBase struct {
+	RmsrId    int64
+	PriceBase float64
 }

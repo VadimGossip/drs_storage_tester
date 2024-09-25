@@ -19,8 +19,8 @@ import (
 var _ def.RateRepository = (*repository)(nil)
 
 type Repository interface {
-	FindRate(ctx context.Context, gwgrId, dateAt int64, dir uint8, aNumber, bNumber string) (int64, float64, time.Duration, error)
-	FindSupRates(ctx context.Context, gwgrIds []int64, dateAt int64, aNumber, bNumber string) (int64, time.Duration, error)
+	FindRate(ctx context.Context, gwgrId, dateAt int64, dir uint8, aNumber, bNumber string) (model.RateBase, time.Duration, error)
+	FindSupRates(ctx context.Context, gwgrIds []int64, dateAt int64, aNumber, bNumber string) (map[int64]model.RateBase, time.Duration, error)
 }
 
 type repository struct {
@@ -174,7 +174,7 @@ func (r *repository) getCurrencyRate(ctx context.Context, currencyId int64, date
 	return 0, dur, fmt.Errorf("can't find currency rate")
 }
 
-func (r *repository) FindRate(ctx context.Context, gwgrId, dateAt int64, dir uint8, aNumber, bNumber string) (int64, float64, time.Duration, error) {
+func (r *repository) FindRate(ctx context.Context, gwgrId, dateAt int64, dir uint8, aNumber, bNumber string) (model.RateBase, time.Duration, error) {
 	var totalDur time.Duration
 	bRmsgId, dur, err := r.getBRmsg(ctx, model.BRmsgKey{
 		GwgrId:    gwgrId,
@@ -182,7 +182,7 @@ func (r *repository) FindRate(ctx context.Context, gwgrId, dateAt int64, dir uin
 		Code:      bNumber,
 	}, dateAt)
 	if err != nil {
-		return 0, 0, dur, err
+		return model.RateBase{}, dur, err
 	}
 
 	aRmsgId, dur, err := r.getARmsg(ctx, model.ARmsgKey{
@@ -201,24 +201,24 @@ func (r *repository) FindRate(ctx context.Context, gwgrId, dateAt int64, dir uin
 	}, dateAt)
 	totalDur += dur
 	if err != nil {
-		return 0, 0, totalDur, err
+		return model.RateBase{}, totalDur, err
 	}
 
 	rv, dur, err := r.getRateValue(ctx, rmsvId)
 	totalDur += dur
 	if err != nil {
-		return 0, 0, totalDur, err
+		return model.RateBase{}, totalDur, err
 	}
 
 	currencyRate, dur, err := r.getCurrencyRate(ctx, rv.CurrencyId, dateAt)
 	totalDur += dur
 	if err != nil {
-		return 0, 0, totalDur, err
+		return model.RateBase{}, totalDur, err
 	}
 
-	return rmsrId, util.RoundFloat(rv.Price*currencyRate, 7), totalDur, nil
+	return model.RateBase{RmsrId: rmsrId, PriceBase: util.RoundFloat(rv.Price*currencyRate, 7)}, totalDur, nil
 }
 
-func (r *repository) FindSupRates(ctx context.Context, gwgrIds []int64, dateAt int64, aNumber, bNumber string) (int64, time.Duration, error) {
-	return 0, 0, fmt.Errorf("unimplemented")
+func (r *repository) FindSupRates(ctx context.Context, gwgrIds []int64, dateAt int64, aNumber, bNumber string) (map[int64]model.RateBase, time.Duration, error) {
+	return nil, 0, fmt.Errorf("unimplemented")
 }

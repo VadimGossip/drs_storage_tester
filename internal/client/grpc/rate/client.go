@@ -11,6 +11,8 @@ import (
 	descRate "github.com/VadimGossip/drs_data_loader/pkg/rate_v1"
 	descGrpc "github.com/VadimGossip/drs_storage_tester/internal/client/grpc"
 	"github.com/VadimGossip/drs_storage_tester/internal/config"
+	"github.com/VadimGossip/drs_storage_tester/internal/converter"
+	"github.com/VadimGossip/drs_storage_tester/internal/model"
 )
 
 type client struct {
@@ -26,7 +28,7 @@ func NewClient(authGRPCClientConfig config.RateGrpcConfig) (descGrpc.RateClient,
 	return &client{cl: descRate.NewRateV1Client(conn)}, nil
 }
 
-func (c *client) FindRate(ctx context.Context, gwgrId, dateAt int64, dir uint8, aNumber, bNumber string) (int64, float64, time.Duration, error) {
+func (c *client) FindRate(ctx context.Context, gwgrId, dateAt int64, dir uint8, aNumber, bNumber string) (model.RateBase, time.Duration, error) {
 	ts := time.Now()
 	res, err := c.cl.FindRate(ctx, &descRate.FindRateRequest{
 		GwgrId:  gwgrId,
@@ -36,11 +38,21 @@ func (c *client) FindRate(ctx context.Context, gwgrId, dateAt int64, dir uint8, 
 		BNumber: bNumber,
 	})
 	if err != nil {
-		return 0, 0, time.Since(ts), err
+		return model.RateBase{}, time.Since(ts), err
 	}
-	return res.RmsrId, res.PriceBase, time.Since(ts), nil
+	return converter.ToRateBaseFromFromDesc(res.Rate), time.Since(ts), nil
 }
 
-func (c *client) FindSupRates(ctx context.Context, gwgrIds []int64, dateAt int64, aNumber, bNumber string) (int64, time.Duration, error) {
-	return 0, 0, fmt.Errorf("unimplemented")
+func (c *client) FindSupRates(ctx context.Context, _ []int64, dateAt int64, aNumber, bNumber string) (map[int64]model.RateBase, time.Duration, error) {
+	ts := time.Now()
+	res, err := c.cl.FindAllSupRates(ctx, &descRate.FindSupRatesRequest{
+		DateAt:  dateAt,
+		ANumber: aNumber,
+		BNumber: bNumber,
+	})
+	if err != nil {
+		return nil, time.Since(ts), err
+	}
+
+	return converter.ToSupRatesBaseFromDesc(res.SupRatesBase), time.Since(ts), fmt.Errorf("unimplemented")
 }

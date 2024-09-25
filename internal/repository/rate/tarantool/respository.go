@@ -3,6 +3,7 @@ package tarantool
 import (
 	"context"
 	"fmt"
+	"github.com/VadimGossip/drs_storage_tester/internal/model"
 	"time"
 
 	db "github.com/VadimGossip/platform_common/pkg/db/tarantool"
@@ -27,28 +28,31 @@ func NewRepository(db db.Client) *repository {
 		db: db,
 	}
 }
-func (r *repository) FindRate(_ context.Context, gwgrId, dateAt int64, dir uint8, aNumber, bNumber string) (int64, float64, time.Duration, error) {
+func (r *repository) FindRate(_ context.Context, gwgrId, dateAt int64, dir uint8, aNumber, bNumber string) (model.RateBase, time.Duration, error) {
 	ts := time.Now()
 	resp, err := r.db.DB().Do(tarantool.NewCallRequest(findRateFunc).Args([]interface{}{gwgrId, dateAt, dir, aNumber, bNumber})).Get()
 	if err != nil {
-		return 0, 0, time.Since(ts), err
+		return model.RateBase{}, time.Since(ts), err
 	}
-	if len(resp) == 2 {
-		return 1, 1, time.Since(ts), nil
+	if len(resp) != 0 {
+		return model.RateBase{RmsrId: 1, PriceBase: 1.11}, time.Since(ts), nil
 	}
 
-	return 0, 0, time.Since(ts), fmt.Errorf("unexpected response length %d", len(resp))
+	return model.RateBase{}, time.Since(ts), fmt.Errorf("unexpected response length %d", len(resp))
 }
 
-func (r *repository) FindSupRates(_ context.Context, gwgrIds []int64, dateAt int64, aNumber, bNumber string) (int64, time.Duration, error) {
+func (r *repository) FindSupRates(_ context.Context, gwgrIds []int64, dateAt int64, aNumber, bNumber string) (map[int64]model.RateBase, time.Duration, error) {
 	ts := time.Now()
 	resp, err := r.db.DB().Do(tarantool.NewCallRequest(findSupRatesFunc).Args([]interface{}{gwgrIds, dateAt, aNumber, bNumber})).Get()
 	if err != nil {
-		return 0, time.Since(ts), err
+		return nil, time.Since(ts), err
 	}
 	if len(resp) == 0 {
-		return 0, time.Since(ts), fmt.Errorf("unexpected response length %d", len(resp))
+		return nil, time.Since(ts), fmt.Errorf("unexpected response length %d", len(resp))
+	}
+	result := map[int64]model.RateBase{
+		1: {RmsrId: 1, PriceBase: 1.11},
 	}
 
-	return int64(len(resp)), time.Since(ts), nil
+	return result, time.Since(ts), nil
 }
