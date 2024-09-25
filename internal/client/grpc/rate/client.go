@@ -53,6 +53,5 @@ func (c *client) FindSupRates(ctx context.Context, _ []int64, dateAt int64, aNum
 	if err != nil {
 		return nil, time.Since(ts), err
 	}
-
-	return converter.ToSupRatesBaseFromDesc(res.SupRatesBase), time.Since(ts), fmt.Errorf("unimplemented")
+	return converter.ToSupRatesBaseFromDesc(res.SupRatesBase), time.Since(ts), nil
 }
