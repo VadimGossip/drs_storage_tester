@@ -13,13 +13,13 @@ type ARmsgKey struct {
 	GwgrId    int64
 	Direction uint8
 	BRmsgId   int64
-	Code      string
+	Code      uint64
 }
 
 type BRmsgKey struct {
 	GwgrId    int64
 	Direction uint8
-	Code      string
+	Code      uint64
 }
 
 type IdHistItem struct {

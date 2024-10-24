@@ -18,34 +18,27 @@ import (
 
 var _ def.RateRepository = (*repository)(nil)
 
-type Repository interface {
-	FindRate(ctx context.Context, gwgrId, dateAt int64, dir uint8, aNumber, bNumber string) (model.RateBase, time.Duration, error)
-	FindSupRates(ctx context.Context, gwgrIds []int64, dateAt int64, aNumber, bNumber string) (map[int64]model.RateBase, time.Duration, error)
-}
-
 type repository struct {
 	db db.Client
 }
-
-var _ Repository = (*repository)(nil)
 
 func NewRepository(db db.Client) *repository {
 	return &repository{db: db}
 }
 
 func (r *repository) buildRAKeyStr(key model.ARmsgKey) string {
-	return model.RAObjectKey + ":" + strconv.FormatInt(key.GwgrId, 10) + ":" + strconv.Itoa(int(key.Direction)) + ":" + strconv.FormatInt(key.BRmsgId, 10) + ":" + key.Code
+	return model.RAObjectKey + ":" + strconv.FormatInt(key.GwgrId, 10) + ":" + strconv.Itoa(int(key.Direction)) + ":" + strconv.FormatInt(key.BRmsgId, 10) + ":" + strconv.FormatUint(key.Code, 10)
 }
 
 func (r *repository) buildRBKeyStr(key model.BRmsgKey) string {
-	return model.RBObjectKey + ":" + strconv.FormatInt(key.GwgrId, 10) + ":" + strconv.Itoa(int(key.Direction)) + ":" + key.Code
+	return model.RBObjectKey + ":" + strconv.FormatInt(key.GwgrId, 10) + ":" + strconv.Itoa(int(key.Direction)) + ":" + strconv.FormatUint(key.Code, 10)
 }
 
 func (r *repository) getBRmsg(ctx context.Context, key model.BRmsgKey, dateAt int64) (int64, time.Duration, error) {
 	keys := make([]string, 0)
-	for i := len(key.Code); i > 0; i-- {
+	for key.Code > 0 {
 		keys = append(keys, r.buildRBKeyStr(key))
-		key.Code = key.Code[:i-1]
+		key.Code /= 10
 	}
 
 	values, dur, err := r.db.DB().MGetWithDur(ctx, keys...)
@@ -74,9 +67,9 @@ func (r *repository) getBRmsg(ctx context.Context, key model.BRmsgKey, dateAt in
 
 func (r *repository) getARmsg(ctx context.Context, key model.ARmsgKey, dateAt int64) (int64, time.Duration, error) {
 	keys := make([]string, 0)
-	for i := len(key.Code); i > 0; i-- {
+	for key.Code > 0 {
 		keys = append(keys, r.buildRAKeyStr(key))
-		key.Code = key.Code[:i-1]
+		key.Code /= 10
 	}
 
 	values, dur, err := r.db.DB().MGetWithDur(ctx, keys...)
@@ -174,7 +167,7 @@ func (r *repository) getCurrencyRate(ctx context.Context, currencyId int64, date
 	return 0, dur, fmt.Errorf("can't find currency rate")
 }
 
-func (r *repository) FindRate(ctx context.Context, gwgrId, dateAt int64, dir uint8, aNumber, bNumber string) (model.RateBase, time.Duration, error) {
+func (r *repository) FindRate(ctx context.Context, gwgrId, dateAt int64, dir uint8, aNumber, bNumber uint64) (model.RateBase, time.Duration, error) {
 	var totalDur time.Duration
 	bRmsgId, dur, err := r.getBRmsg(ctx, model.BRmsgKey{
 		GwgrId:    gwgrId,
@@ -219,6 +212,6 @@ func (r *repository) FindRate(ctx context.Context, gwgrId, dateAt int64, dir uin
 	return model.RateBase{RmsrId: rmsrId, PriceBase: util.RoundFloat(rv.Price*currencyRate, 7)}, totalDur, nil
 }
 
-func (r *repository) FindSupRates(ctx context.Context, gwgrIds []int64, dateAt int64, aNumber, bNumber string) (map[int64]model.RateBase, time.Duration, error) {
+func (r *repository) FindSupRates(ctx context.Context, gwgrIds []int64, dateAt int64, aNumber, bNumber uint64) (map[int64]model.RateBase, time.Duration, error) {
 	return nil, 0, fmt.Errorf("unimplemented")
 }

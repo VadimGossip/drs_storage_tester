@@ -28,7 +28,7 @@ func NewClient(authGRPCClientConfig config.RateGrpcConfig) (descGrpc.RateClient,
 	return &client{cl: descRate.NewRateV1Client(conn)}, nil
 }
 
-func (c *client) FindRate(ctx context.Context, gwgrId, dateAt int64, dir uint8, aNumber, bNumber string) (model.RateBase, time.Duration, error) {
+func (c *client) FindRate(ctx context.Context, gwgrId, dateAt int64, dir uint8, aNumber, bNumber uint64) (model.RateBase, time.Duration, error) {
 	ts := time.Now()
 	res, err := c.cl.FindRate(ctx, &descRate.FindRateRequest{
 		GwgrId:  gwgrId,
@@ -43,7 +43,7 @@ func (c *client) FindRate(ctx context.Context, gwgrId, dateAt int64, dir uint8, 
 	return converter.ToRateBaseFromFromDesc(res.Rate), time.Since(ts), nil
 }
 
-func (c *client) FindSupRates(ctx context.Context, _ []int64, dateAt int64, aNumber, bNumber string) (map[int64]model.RateBase, time.Duration, error) {
+func (c *client) FindSupRates(ctx context.Context, _ []int64, dateAt int64, aNumber, bNumber uint64) (map[int64]model.RateBase, time.Duration, error) {
 	ts := time.Now()
 	res, err := c.cl.FindSupRates(ctx, &descRate.FindSupRatesRequest{
 		DateAt:  dateAt,

@@ -8,6 +8,8 @@ github.com/VadimGossip/drs_data_loader v0.0.0-20240925182333-235e4cd10b65 h1:owA
 github.com/VadimGossip/drs_data_loader v0.0.0-20240925182333-235e4cd10b65/go.mod h1:g5GouPmnw6OjZg/3iVajKm0ExNyTknzJCEZ2YHFxREc=
 github.com/VadimGossip/drs_data_loader v0.0.0-20240925192655-4036c73a8389 h1:HWH4Tas9gtB0IqgGVZh2tBPc4x6dFMCIL8xG7coukRQ=
 github.com/VadimGossip/drs_data_loader v0.0.0-20240925192655-4036c73a8389/go.mod h1:g5GouPmnw6OjZg/3iVajKm0ExNyTknzJCEZ2YHFxREc=
+github.com/VadimGossip/drs_data_loader v0.0.0-20241024182052-e2a275e0c6f3 h1:b+dgehEX+NjWdPfLa2MnHJmt74uT+pdeyZV/2FeWsXk=
+github.com/VadimGossip/drs_data_loader v0.0.0-20241024182052-e2a275e0c6f3/go.mod h1:g5GouPmnw6OjZg/3iVajKm0ExNyTknzJCEZ2YHFxREc=
 github.com/VadimGossip/platform_common v1.0.8 h1:9ASJVwScgEsCiFAEOcHeF2zasSqrOFyb1f8rJ/ytQzs=
 github.com/VadimGossip/platform_common v1.0.8/go.mod h1:mRylW2+2gqbIGlfkC4j1aMqvroMzxpThFXLx0+0xeJc=
 github.com/bsm/ginkgo/v2 v2.12.0 h1:Ny8MWAHyOepLGlLKYmXG4IEkioBysk6GpaRTLC8zwWs=

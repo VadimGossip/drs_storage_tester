@@ -28,7 +28,10 @@ func NewRepository(db db.Client) *repository {
 		db: db,
 	}
 }
-func (r *repository) FindRate(_ context.Context, gwgrId, dateAt int64, dir uint8, aNumber, bNumber string) (model.RateBase, time.Duration, error) {
+
+//need check type changed
+
+func (r *repository) FindRate(_ context.Context, gwgrId, dateAt int64, dir uint8, aNumber, bNumber uint64) (model.RateBase, time.Duration, error) {
 	ts := time.Now()
 	resp, err := r.db.DB().Do(tarantool.NewCallRequest(findRateFunc).Args([]interface{}{gwgrId, dateAt, dir, aNumber, bNumber})).Get()
 	if err != nil {
@@ -41,7 +44,7 @@ func (r *repository) FindRate(_ context.Context, gwgrId, dateAt int64, dir uint8
 	return model.RateBase{}, time.Since(ts), fmt.Errorf("unexpected response length %d", len(resp))
 }
 
-func (r *repository) FindSupRates(_ context.Context, gwgrIds []int64, dateAt int64, aNumber, bNumber string) (map[int64]model.RateBase, time.Duration, error) {
+func (r *repository) FindSupRates(_ context.Context, gwgrIds []int64, dateAt int64, aNumber, bNumber uint64) (map[int64]model.RateBase, time.Duration, error) {
 	ts := time.Now()
 	resp, err := r.db.DB().Do(tarantool.NewCallRequest(findSupRatesFunc).Args([]interface{}{gwgrIds, dateAt, aNumber, bNumber})).Get()
 	if err != nil {
